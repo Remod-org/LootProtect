@@ -32,7 +32,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.29")]
+    [Info("Loot Protection", "RFC1920", "1.0.30")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -761,9 +761,26 @@ namespace Oxide.Plugins
             if (ent == null) return null;
             DoLog($"Player {player.displayName} looting StorageContainer {ent.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CheckCupboardAccess(ent, player)) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
-            if (CheckShare(ent, player.userID)) return null;
+            string entityName = ent.ShortPrefabName;
+            if (entityName == "fuelstorage" || entityName == "hopperoutput" || entityName == "crudeoutput")
+            {
+                BaseEntity parent = ent.GetParentEntity();
+                if (parent != null && (parent.ShortPrefabName == "mining_quarry" || parent.ShortPrefabName == "mining.pumpjack"))
+                {
+                    if (CanAccess(ent.ShortPrefabName, player.userID, parent.OwnerID)) return null;
+                    if (CheckShare(parent, player.userID)) return null;
+                }
+				else 
+				{
+					return null;
+				}
+            } 
+            else
+            {
+                if (CheckCupboardAccess(ent, player)) return null;
+                if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+                if (CheckShare(ent, player.userID)) return null;
+            }
 
             return true;
         }
@@ -1280,6 +1297,10 @@ namespace Oxide.Plugins
                 configData.EnabledZones = configData.Zones;
                 configData.Zones = null;
             }
+			if (configData.Version < new VersionNumber(1, 0, 30))
+			{
+				configData.Rules.Add("crudeoutput", true);
+			}
 
             configData.Version = Version;
             SaveConfig(configData);
@@ -1333,6 +1354,7 @@ namespace Oxide.Plugins
                     { "murderer_corpse", false },
                     { "fuelstorage", true },
                     { "hopperoutput", true },
+					{ "crudeoutput", true },
                     { "recycler_static", false },
                     { "sign.small.wood", true},
                     { "sign.medium.wood", true},
