@@ -30,7 +30,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.30")]
+    [Info("Loot Protection", "RFC1920", "1.0.31")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -46,7 +46,7 @@ namespace Oxide.Plugins
         private bool newsave;
 
         [PluginReference]
-        private readonly Plugin ZoneManager, Friends, Clans, RustIO;
+        private readonly Plugin ZoneManager, Friends, Clans, RustIO, NextGenPVE;
 
         private readonly string logfilename = "log";
         private bool dolog;
@@ -690,6 +690,7 @@ namespace Oxide.Plugins
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(ent)) return null;
 
             return true;
         }
@@ -715,6 +716,7 @@ namespace Oxide.Plugins
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
             return true;
         }
@@ -728,6 +730,7 @@ namespace Oxide.Plugins
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
             return true;
         }
@@ -747,6 +750,7 @@ namespace Oxide.Plugins
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
             return true;
         }
@@ -761,8 +765,20 @@ namespace Oxide.Plugins
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
             return true;
+        }
+
+        private bool CanLootPVP(BaseCombatEntity entity)
+        {
+            object pve = NextGenPVE?.CallHook("IsInPVEZone", entity);
+            if (pve != null && pve is bool && !(bool)pve)
+            {
+                return configData.Options.allowLootingInPVPAreas;
+            }
+
+            return false;
         }
 
         private object CanLootEntity(BasePlayer player, DroppedItemContainer container)
@@ -774,6 +790,7 @@ namespace Oxide.Plugins
 
             if (container.playerSteamID < 76560000000000000L) return null;
             if (CanAccess(ent.ShortPrefabName, player.userID, container.playerSteamID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
             return true;
         }
@@ -784,6 +801,7 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName}:{player.UserIDString} looting corpse {corpse.name}:{corpse.playerSteamID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CanAccess(corpse.ShortPrefabName, player.userID, corpse.playerSteamID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(corpse)) return null;
 
             return true;
         }
@@ -825,6 +843,7 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName}:{player.UserIDString} looting Player {target.displayName}:{target.UserIDString}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CanAccess(target.ShortPrefabName, player.userID, target.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(target)) return null;
 
             return false; // If true, this does not work...
         }
@@ -872,6 +891,7 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName}:{player.UserIDString} looting plant {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CanAccess(plant.ShortPrefabName, player.userID, plant.OwnerID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(plant)) return null;
 
             return true;
         }
@@ -884,6 +904,7 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CanAccess(privilege.ShortPrefabName, player.userID, privilege.OwnerID)) return null;
             if (CheckShare(privilege, player.userID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(privilege)) return null;
 
             return true;
         }
@@ -1293,6 +1314,11 @@ namespace Oxide.Plugins
             {
                 configData.Options.useHammerForShareStatus = false;
             }
+            if (configData.Version < new VersionNumber(1, 0, 31))
+            {
+                configData.Options.useNextGenPVE = false;
+                configData.Options.allowLootingInPVPAreas = false;
+            }
             configData.Version = Version;
             SaveConfig(configData);
         }
@@ -1310,6 +1336,7 @@ namespace Oxide.Plugins
                     useSchedule = false,
                     useRealTime = false,
                     useFriends = false,
+                    useNextGenPVE = false,
                     useClans = false,
                     useTeams = false,
                     HonorRelationships = false,
@@ -1325,7 +1352,8 @@ namespace Oxide.Plugins
                     BShareIncludeElectrical = false,
                     TCAuthedUserAccess = false,
                     useHammerForShareStatus = false,
-                    respondToActivationHooks = false
+                    respondToActivationHooks = false,
+                    allowLootingInPVPAreas = false
                 },
                 Rules = new Dictionary<string, bool>
                 {
@@ -1402,6 +1430,7 @@ namespace Oxide.Plugins
             public bool useFriends;
             public bool useClans;
             public bool useTeams;
+            public bool useNextGenPVE;
             public bool HonorRelationships;
             public bool OverrideOven;
             public bool OverrideTC;
@@ -1416,6 +1445,7 @@ namespace Oxide.Plugins
             public bool TCAuthedUserAccess;
             public bool useHammerForShareStatus;
             public bool respondToActivationHooks;
+            public bool allowLootingInPVPAreas;
         }
 
         public class Schedule
