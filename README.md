@@ -66,7 +66,12 @@ Note that bshare/bunshare are currently bulk commands for share/unshare with all
     "BShareIncludeSigns": false,
     "BShareIncludeLights": false,
     "BShareIncludeElectrical": false,
-    "TCAuthedUserAccess": true
+    "TCAuthedUserAccess": true,
+    "useHammerForShareStatus": false,
+    "respondToActivationHooks": false,
+    "allowLootingInPVPAreas": false,
+    "allowLootingOfflineOwner": false
+
   },
   "Rules": {
     "bbq.deployed": true,
@@ -99,7 +104,7 @@ Note that bshare/bunshare are currently bulk commands for share/unshare with all
   "Version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 24
+    "Patch": 32
   }
 }
 ```
@@ -122,6 +127,10 @@ Note that bshare/bunshare are currently bulk commands for share/unshare with all
   - `BShareIncludeLights` -- Include lighting fixtures when giving access with bshare/bunshare.
   - `BShareIncludeElectrical` -- Include electric switches, etc.,  when giving access with bshare/bunshare.
   - `TCAuthedUserAccess` -- Player authed to local TC gets access
+  - `useHammerForShareStatus` -- Hitting an object with a hammer will display share status.
+  - `respondToActivationHooks` -- Enable/disable if EnableMe/DisableMe hooks are called.
+  - `allowLootingInPVPAreas` -- If in a NextGenPVE PVP (damage allowed) zone, allow looting.
+  - `allowLootingOfflineOwner` -- If true, and protectedDays == 0, any item owned by an offline player can be looted.
 
 #### Rules
   This is a simple list of prefab names and whether or not they will be protected.  Several defaults are included to work with standard storage boxes, furnaces, campfire, etc.

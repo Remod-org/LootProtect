@@ -24,13 +24,14 @@ using Oxide.Core.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.31")]
+    [Info("Loot Protection", "RFC1920", "1.0.32")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -975,7 +976,15 @@ namespace Oxide.Plugins
             // The following skips a ton of logging if the user has their own backpack open.
             if (lootingBackpack.ContainsKey(source)) return true;
 
-            if (configData.Options.protectedDays > 0 && target > 76560000000000000L)
+            if (configData.Options.allowLootingOfflineOwner && configData.Options.protectedDays == 0 && target > 76560000000000000L)
+            {
+                foreach (BasePlayer sleeper in BasePlayer.sleepingPlayerList.Where(x => x.userID == target))
+                {
+                    DoLog("Allowing access to container owned by offline player");
+                    return true;
+                }
+            }
+            else if (configData.Options.protectedDays > 0 && target > 76560000000000000L)
             {
                 long lc = 0;
                 lastConnected.TryGetValue(target.ToString(), out lc);
@@ -995,7 +1004,6 @@ namespace Oxide.Plugins
                     }
                 }
             }
-
             if (configData.Options.RequirePermission && target > 76560000000000000L)
             {
                 BasePlayer tgt = FindPlayerByID(target);
@@ -1353,7 +1361,8 @@ namespace Oxide.Plugins
                     TCAuthedUserAccess = false,
                     useHammerForShareStatus = false,
                     respondToActivationHooks = false,
-                    allowLootingInPVPAreas = false
+                    allowLootingInPVPAreas = false,
+                    allowLootingOfflineOwner = false
                 },
                 Rules = new Dictionary<string, bool>
                 {
@@ -1446,6 +1455,7 @@ namespace Oxide.Plugins
             public bool useHammerForShareStatus;
             public bool respondToActivationHooks;
             public bool allowLootingInPVPAreas;
+            public bool allowLootingOfflineOwner;
         }
 
         public class Schedule
