@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.32")]
+    [Info("Loot Protection", "RFC1920", "1.0.33")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -693,7 +693,7 @@ namespace Oxide.Plugins
             if (CheckShare(ent, player.userID)) return null;
             if (configData.Options.useNextGenPVE && CanLootPVP(ent)) return null;
 
-            return true;
+            return false;
         }
 
         private object CanPickupLock(BasePlayer player, BaseLock ent)
@@ -719,7 +719,7 @@ namespace Oxide.Plugins
             if (CheckShare(ent, player.userID)) return null;
             if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
-            return true;
+            return false;
         }
 
         private object CanUpdateSign(BasePlayer player, Signage sign)
@@ -733,7 +733,7 @@ namespace Oxide.Plugins
             if (CheckShare(ent, player.userID)) return null;
             if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
-            return true;
+            return false;
         }
 
         private object CanLootEntity(BasePlayer player, VendingMachine container)
@@ -789,7 +789,7 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} looting DroppedItemContainer {ent?.ShortPrefabName}:{container.playerSteamID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
-            if (container.playerSteamID < 76560000000000000L) return null;
+            if (!container.OwnerID.IsSteamId()) return null;
             if (CanAccess(ent.ShortPrefabName, player.userID, container.playerSteamID)) return null;
             if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
 
@@ -846,7 +846,7 @@ namespace Oxide.Plugins
             if (CanAccess(target.ShortPrefabName, player.userID, target.userID)) return null;
             if (configData.Options.useNextGenPVE && CanLootPVP(target)) return null;
 
-            return false; // If true, this does not work...
+            return false;
         }
 
         private object OnOvenToggle(BaseOven oven, BasePlayer player)
@@ -868,8 +868,32 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} toggling button {button.ShortPrefabName}:{button.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
-            if (button.OwnerID < 76560000000000000L) return null;
+            if (!button.OwnerID.IsSteamId()) return null;
             if (CanAccess(button.ShortPrefabName, player.userID, button.OwnerID)) return null;
+
+            return true;
+        }
+
+        private object CanLock(BasePlayer player, BaseLock baseLock)
+        {
+            if (player == null || baseLock == null) return null;
+            DoLog($"Player {player.displayName} toggling IOEntity {baseLock.ShortPrefabName}:{baseLock.OwnerID}");
+            if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
+            if (!baseLock.OwnerID.IsSteamId()) return null;
+            if (CanAccess(baseLock.ShortPrefabName, player.userID, baseLock.OwnerID)) return null;
+
+            return true;
+        }
+
+        private object CanChangeCode(BasePlayer player, CodeLock codeLock, string newCode, bool isGuestCode)
+        {
+            if (player == null || codeLock == null) return null;
+            DoLog($"Player {player.displayName} toggling IOEntity {codeLock.ShortPrefabName}:{codeLock.OwnerID}");
+            if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
+            if (!codeLock.OwnerID.IsSteamId()) return null;
+            if (CanAccess(codeLock.ShortPrefabName, player.userID, codeLock.OwnerID)) return null;
 
             return true;
         }
@@ -880,8 +904,30 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} toggling IOEntity {entity.ShortPrefabName}:{entity.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
-            if (entity.OwnerID < 76560000000000000L) return null;
+            if (!entity.OwnerID.IsSteamId()) return null;
             if (CanAccess(entity.ShortPrefabName, player.userID, entity.OwnerID)) return null;
+
+            return true;
+        }
+
+        private object CanTakeCutting(BasePlayer player, GrowableEntity plant)
+        {
+            if (player == null || plant == null) return null;
+            DoLog($"Player {player.displayName}:{player.UserIDString} looting plant cutting {plant.ShortPrefabName}:{plant.OwnerID}");
+            if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+            if (CanAccess(plant.ShortPrefabName, player.userID, plant.OwnerID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(plant)) return null;
+
+            return true;
+        }
+
+        private object OnRemoveDying(GrowableEntity plant, BasePlayer player)
+        {
+            if (player == null || plant == null) return null;
+            DoLog($"Player {player.displayName}:{player.UserIDString} looting dying plant {plant.ShortPrefabName}:{plant.OwnerID}");
+            if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+            if (CanAccess(plant.ShortPrefabName, player.userID, plant.OwnerID)) return null;
+            if (configData.Options.useNextGenPVE && CanLootPVP(plant)) return null;
 
             return true;
         }
@@ -911,7 +957,53 @@ namespace Oxide.Plugins
         }
         #endregion
 
+        // Accept external zone config from DynamicPvp (future)
+        private bool AddOrUpdateMapping(string key, string rulesetname)
+        {
+            if (configData.DisabledZones == null || configData.DisabledZones.Length == 0)
+            {
+                List<string> newzones = new List<string> { key };
+                configData.DisabledZones = newzones.ToArray();
+                SaveConfig(configData);
+                return true;
+            }
+            if (!configData.DisabledZones.Contains(key))
+            {
+                List<string> newzones = new List<string>
+                {
+                    configData.DisabledZones.ToArray()[0],
+                    key
+                };
+                configData.DisabledZones = newzones.ToArray();
+                SaveConfig(configData);
+                return true;
+            }
+            return false;
+        }
+
         #region helpers
+        // Accept external zone config from DynamicPVP
+        private bool RemoveMapping(string key)
+        {
+            if (configData.DisabledZones == null || configData.DisabledZones.Length == 0)
+            {
+                return true;
+            }
+            if (configData.DisabledZones.Length > 0 && configData.DisabledZones.Contains(key))
+            {
+                List<string> newzones = new List<string>();
+                foreach (string zone in configData.DisabledZones)
+                {
+                    if (zone == key) continue;
+                    newzones.Add(zone);
+                }
+                configData.DisabledZones = newzones.ToArray();
+                SaveConfig(configData);
+                return true;
+            }
+            return false;
+        }
+
         // From PlayerDatabase
         private long ToEpochTime(DateTime dateTime)
         {
@@ -973,10 +1065,14 @@ namespace Oxide.Plugins
             if (!enabled) return true;
             bool inzone = false;
 
+            object externalCheck = Interface.CallHook("OnLootProtectionCanAccess", new object[] { prefab, source, target });
+            if (externalCheck != null && externalCheck is bool && (bool)externalCheck) return true;
+
             // The following skips a ton of logging if the user has their own backpack open.
             if (lootingBackpack.ContainsKey(source)) return true;
 
-            if (configData.Options.allowLootingOfflineOwner && configData.Options.protectedDays == 0 && target > 76560000000000000L)
+            // Offline looting
+            if (configData.Options.allowLootingOfflineOwner && configData.Options.protectedDays == 0 && target.IsSteamId())
             {
                 foreach (BasePlayer sleeper in BasePlayer.sleepingPlayerList.Where(x => x.userID == target))
                 {
@@ -984,7 +1080,7 @@ namespace Oxide.Plugins
                     return true;
                 }
             }
-            else if (configData.Options.protectedDays > 0 && target > 76560000000000000L)
+            else if (configData.Options.protectedDays > 0 && target.IsSteamId())
             {
                 long lc = 0;
                 lastConnected.TryGetValue(target.ToString(), out lc);
@@ -1004,17 +1100,20 @@ namespace Oxide.Plugins
                     }
                 }
             }
-            if (configData.Options.RequirePermission && target > 76560000000000000L)
+
+            // Online target
+            if (configData.Options.RequirePermission && target.IsSteamId())
             {
-                BasePlayer tgt = FindPlayerByID(target);
-                if (permission.UserHasPermission(tgt?.UserIDString, permLootProtected)) return true;
+                BasePlayer tgt = FindPlayerByID(target, false);
+                if (!permission.UserHasPermission(tgt?.UserIDString, permLootProtected)) return true;
             }
 
-            BasePlayer player = BasePlayer.FindByID(source);
+            BasePlayer player = FindPlayerByID(source, false);
             if (player == null) return true;
 
             if (configData.Options.useZoneManager)
             {
+
                 if (configData.EnabledZones.Length == 0 && configData.DisabledZones.Length == 0)
                 {
                     DoLog("Admin set useZoneManager but didn't list any zones...");
@@ -1026,7 +1125,7 @@ namespace Oxide.Plugins
                     // If no zones are set, this will be skipped altogether.
                     string[] pzones = GetPlayerZones(player);
 
-                    if (configData.EnabledZones.Length > 0 && pzones.Length > 0)
+                    if (configData.EnabledZones.Length > 0 && pzones?.Length > 0)
                     {
                         // Compare player's zones to our zone list
                         foreach (string z in pzones)
@@ -1039,7 +1138,7 @@ namespace Oxide.Plugins
                             }
                         }
                     }
-                    if (configData.DisabledZones.Length > 0 && pzones.Length > 0)
+                    if (configData.DisabledZones.Length > 0 && pzones?.Length > 0)
                     {
                         inzone = true;
                         // Compare player's zones to our disabled zone list
@@ -1063,7 +1162,7 @@ namespace Oxide.Plugins
 
             DoLog($"Checking access to {prefab}");
             //if (target == 0)
-            if (target < 76560000000000000L)
+            if (!target.IsSteamId())
             {
                 DoLog("Not owned by a real player.  Access allowed.");
                 return true;
@@ -1115,7 +1214,7 @@ namespace Oxide.Plugins
             return result;
         }
 
-        private BasePlayer FindPlayerByID(ulong userid)
+        private BasePlayer FindPlayerByID(ulong userid, bool includeSleepers=true)
         {
             foreach (BasePlayer activePlayer in BasePlayer.activePlayerList)
             {
@@ -1124,11 +1223,14 @@ namespace Oxide.Plugins
                     return activePlayer;
                 }
             }
-            foreach (BasePlayer sleepingPlayer in BasePlayer.sleepingPlayerList)
+            if (includeSleepers)
             {
-                if (sleepingPlayer.userID.Equals(userid))
+                foreach (BasePlayer sleepingPlayer in BasePlayer.sleepingPlayerList)
                 {
-                    return sleepingPlayer;
+                    if (sleepingPlayer.userID.Equals(userid))
+                    {
+                        return sleepingPlayer;
+                    }
                 }
             }
             return null;
@@ -1226,7 +1328,7 @@ namespace Oxide.Plugins
             }
             if (configData.Options.useTeams)
             {
-                BasePlayer player = BasePlayer.FindByID(playerid);
+                BasePlayer player = FindPlayerByID(playerid);
                 if (player != null && player?.currentTeam != 0)
                 {
                     RelationshipManager.PlayerTeam playerTeam = RelationshipManager.ServerInstance.FindTeam(player.currentTeam);
