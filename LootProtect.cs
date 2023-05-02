@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.33")]
+    [Info("Loot Protection", "RFC1920", "1.0.34")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -60,13 +60,13 @@ namespace Oxide.Plugins
             public uint netid;
             public ulong sharewith;
         }
-        #endregion
+        #endregion vars
 
         #region Message
         private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
         private void Message(IPlayer player, string key, params object[] args) => player.Message(Lang(key, player.Id, args));
         private void LMessage(IPlayer player, string key, params object[] args) => player.Reply(Lang(key, player.Id, args));
-        #endregion
+        #endregion Message
 
         #region init
         private void Init()
@@ -265,7 +265,7 @@ namespace Oxide.Plugins
 
             timer.Once(configData.Options.useRealTime ? 30f : 5f, () => RunSchedule(refresh));
         }
-        #endregion
+        #endregion init
 
         #region commands
         [Command("unshare")]
@@ -680,7 +680,7 @@ namespace Oxide.Plugins
                     break;
             }
         }
-        #endregion
+        #endregion commands
 
         #region hooks
         private object CanPickupEntity(BasePlayer player, BaseCombatEntity ent)
@@ -955,9 +955,10 @@ namespace Oxide.Plugins
 
             return true;
         }
-        #endregion
+        #endregion hooks
 
-        // Accept external zone config from DynamicPvp (future)
+        #region helpers
+        // Accept external zone config from DynamicPVP
         private bool AddOrUpdateMapping(string key, string rulesetname)
         {
             if (configData.DisabledZones == null || configData.DisabledZones.Length == 0)
@@ -981,7 +982,6 @@ namespace Oxide.Plugins
             return false;
         }
 
-        #region helpers
         // Accept external zone config from DynamicPVP
         private bool RemoveMapping(string key)
         {
@@ -1328,14 +1328,10 @@ namespace Oxide.Plugins
             }
             if (configData.Options.useTeams)
             {
-                BasePlayer player = FindPlayerByID(playerid);
-                if (player != null && player?.currentTeam != 0)
+                RelationshipManager.PlayerTeam playerTeam = RelationshipManager.ServerInstance.FindPlayersTeam(playerid);
+                if (playerTeam?.members.Contains(ownerid) == true)
                 {
-                    RelationshipManager.PlayerTeam playerTeam = RelationshipManager.ServerInstance.FindTeam(player.currentTeam);
-                    if (playerTeam?.members.Contains(ownerid) == true)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
             return false;
@@ -1370,7 +1366,7 @@ namespace Oxide.Plugins
                 else Puts(message);
             }
         }
-        #endregion
+        #endregion helpers
 
         #region config
         private void LoadConfigVariables()
@@ -1570,6 +1566,6 @@ namespace Oxide.Plugins
             public string endminute;
             public bool enabled = true;
         }
-        #endregion
+        #endregion config
     }
 }
