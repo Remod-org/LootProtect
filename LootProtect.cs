@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.34")]
+    [Info("Loot Protection", "RFC1920", "1.0.35")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -293,7 +293,7 @@ namespace Oxide.Plugins
                         List<Share> repl = new List<Share>();
                         foreach (Share x in sharing[iplayer.Id])
                         {
-                            if (x.netid != ent.net.ID)
+                            if (x.netid != (uint)ent.net.ID.Value)
                             {
                                 repl.Add(x);
                             }
@@ -334,7 +334,7 @@ namespace Oxide.Plugins
                     {
                         if (ent.OwnerID != player.userID && !IsFriend(player.userID, ent.OwnerID)) return;
                         string ename = ent.ShortPrefabName;
-                        sharing[iplayer.Id].Add(new Share { netid = ent.net.ID, name = ename, sharewith = 0 });
+                        sharing[iplayer.Id].Add(new Share { netid = (uint)ent.net.ID.Value, name = ename, sharewith = 0 });
                         SaveData();
                         Message(iplayer, "shared", ename, Lang("all"));
                     }
@@ -360,7 +360,7 @@ namespace Oxide.Plugins
                                 message += $"{ename}({ent.net.ID}):\n";
                                 foreach (Share x in sharing[ent.OwnerID.ToString()])
                                 {
-                                    if (x.netid != ent.net.ID) continue;
+                                    if (x.netid != (uint)ent.net.ID.Value) continue;
                                     if (x.sharewith == 0)
                                     {
                                         message += "\t" + Lang("all") + "\n";
@@ -395,7 +395,7 @@ namespace Oxide.Plugins
                         {
                             if (ent.OwnerID != player.userID && !IsFriend(player.userID, ent.OwnerID)) return;
                             string ename = ent.ShortPrefabName;
-                            sharing[iplayer.Id].Add(new Share { netid = ent.net.ID, name = ename, sharewith = 1 });
+                            sharing[iplayer.Id].Add(new Share { netid = (uint)ent.net.ID.Value, name = ename, sharewith = 1 });
                             SaveData();
                             Message(iplayer, "sharedf", ename);
                         }
@@ -416,11 +416,11 @@ namespace Oxide.Plugins
                             if (sharewith == null)
                             {
                                 if (!configData.Options.HonorRelationships) return;
-                                sharing[iplayer.Id].Add(new Share { netid = ent.net.ID, name = ename, sharewith = 1 });
+                                sharing[iplayer.Id].Add(new Share { netid = (uint)ent.net.ID.Value, name = ename, sharewith = 1 });
                             }
                             else
                             {
-                                sharing[iplayer.Id].Add(new Share { netid = ent.net.ID, name = ename, sharewith = sharewith.userID });
+                                sharing[iplayer.Id].Add(new Share { netid = (uint)ent.net.ID.Value, name = ename, sharewith = sharewith.userID });
                             }
                             SaveData();
                             Message(iplayer, "shared", ename, sharewith.displayName);
@@ -466,7 +466,7 @@ namespace Oxide.Plugins
                 foreach (Share x in sharing[iplayer.Id])
                 {
                     if (x.netid == 0) continue;
-                    if (x.netid == ent.net.ID)
+                    if (x.netid == (uint)ent.net.ID.Value)
                     {
                         found++;
                         if (repl.Contains(x)) repl.Remove(x);
@@ -530,12 +530,12 @@ namespace Oxide.Plugins
 
                 count++;
 
-                if (populated.Contains(ent.net.ID)) continue;
-                populated.Add(ent.net.ID);
+                if (populated.Contains((uint)ent.net.ID.Value)) continue;
+                populated.Add((uint)ent.net.ID.Value);
                 DoLog($"Adding {ent.ShortPrefabName} ({ent.net.ID}) to sharing list...");
                 //Message(iplayer, $"Sharing {ent.ShortPrefabName}");
                 // Entity under control of TC
-                sharing[owner.ToString()].Add(new Share { netid = ent.net.ID, name = ent.ShortPrefabName, sharewith = 0 });
+                sharing[owner.ToString()].Add(new Share { netid = (uint)ent.net.ID.Value, name = ent.ShortPrefabName, sharewith = 0 });
             }
             DoLog($"Shared {count} entities");
             SaveData();
@@ -607,7 +607,7 @@ namespace Oxide.Plugins
                     //foreach (Share x in sharing[ent.OwnerID.ToString()])
                     foreach (Share x in sharing[iplayer.Id])
                     {
-                        if (x.netid != ent.net.ID) continue;
+                        if (x.netid != (uint)ent.net.ID.Value) continue;
                         message += $"{count}. {ent.ShortPrefabName}: ";
                         if (x.sharewith == 0)
                         {
@@ -621,12 +621,12 @@ namespace Oxide.Plugins
                     continue;
                 }
 
-                if (populated.Contains(ent.net.ID)) continue;
-                populated.Add(ent.net.ID);
+                if (populated.Contains((uint)ent.net.ID.Value)) continue;
+                populated.Add((uint)ent.net.ID.Value);
                 DoLog($"Adding {ent.ShortPrefabName} ({ent.net.ID}) to sharing list...");
                 //Message(iplayer, $"Sharing {ent.ShortPrefabName}");
                 // Entity under control of TC
-                sharing[iplayer.Id].Add(new Share { netid = ent.net.ID, name = ent.ShortPrefabName, sharewith = 0 });
+                sharing[iplayer.Id].Add(new Share { netid = (uint)ent.net.ID.Value, name = ent.ShortPrefabName, sharewith = 0 });
             }
             if (query)
             {
@@ -1044,7 +1044,7 @@ namespace Oxide.Plugins
                 DoLog($"Found entry for {target.OwnerID}");
                 foreach (Share x in sharing[target.OwnerID.ToString()])
                 {
-                    if (x.netid == target.net.ID && (x.sharewith == userid || x.sharewith == 0))
+                    if (x.netid == (uint)target.net.ID.Value && (x.sharewith == userid || x.sharewith == 0))
                     {
                         DoLog($"Found netid {target.net.ID} shared to {userid} or all.");
                         return true;
