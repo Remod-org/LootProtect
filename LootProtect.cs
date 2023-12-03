@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.35")]
+    [Info("Loot Protection", "RFC1920", "1.0.36")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -689,11 +689,9 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} picking up {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CheckCupboardAccess(ent, player)) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(ent)) return null;
-
-            return false;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent) ? null : (object)false;
         }
 
         private object CanPickupLock(BasePlayer player, BaseLock ent)
@@ -702,10 +700,8 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} picking up {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CheckCupboardAccess(ent, player)) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
-            if (CheckShare(ent, player.userID)) return null;
-
-            return true;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+            return CheckShare(ent, player.userID) ? null : (object)true;
         }
 
         private object CanUpdateSign(BasePlayer player, PhotoFrame sign)
@@ -715,11 +711,9 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} painting PhotoFrame {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CheckCupboardAccess(ent, player)) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
-
-            return false;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity) ? null : (object)false;
         }
 
         private object CanUpdateSign(BasePlayer player, Signage sign)
@@ -729,11 +723,9 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} painting SIGN {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CheckCupboardAccess(ent, player)) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
-
-            return false;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity) ? null : (object)false;
         }
 
         private object CanLootEntity(BasePlayer player, VendingMachine container)
@@ -751,9 +743,7 @@ namespace Oxide.Plugins
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
-
-            return true;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity) ? null : (object)true;
         }
 
         private object CanLootEntity(BasePlayer player, StorageContainer container)
@@ -761,25 +751,23 @@ namespace Oxide.Plugins
             if (player == null || container == null) return null;
             BaseEntity ent = container?.GetComponentInParent<BaseEntity>();
             if (ent == null) return null;
-            DoLog($"Player {player.displayName} looting StorageContainer {ent.ShortPrefabName}");
-            if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+            DoLog($"Player {player.displayName} looting StorageContainer {ent.ShortPrefabName} owned by {ent.OwnerID}");
+            //if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+            if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass)
+            {
+                DoLog("Admin Bypass");
+                return null;
+            }
             if (CheckCupboardAccess(ent, player)) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
-
-            return true;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity) ? null : (object)true;
         }
 
         private bool CanLootPVP(BaseCombatEntity entity)
         {
             object pve = NextGenPVE?.CallHook("IsInPVEZone", entity);
-            if (pve != null && pve is bool && !(bool)pve)
-            {
-                return configData.Options.allowLootingInPVPAreas;
-            }
-
-            return false;
+            return pve != null && pve is bool && !(bool)pve ? configData.Options.allowLootingInPVPAreas : false;
         }
 
         private object CanLootEntity(BasePlayer player, DroppedItemContainer container)
@@ -790,10 +778,8 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
             if (!container.OwnerID.IsSteamId()) return null;
-            if (CanAccess(ent.ShortPrefabName, player.userID, container.playerSteamID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity)) return null;
-
-            return true;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, container.playerSteamID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity) ? null : (object)true;
         }
 
         private object CanLootEntity(BasePlayer player, LootableCorpse corpse)
@@ -801,10 +787,8 @@ namespace Oxide.Plugins
             if (player == null || corpse == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting corpse {corpse.name}:{corpse.playerSteamID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(corpse.ShortPrefabName, player.userID, corpse.playerSteamID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(corpse)) return null;
-
-            return true;
+            if (CanAccess(corpse?.ShortPrefabName, player.userID, corpse.playerSteamID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(corpse) ? null : (object)true;
         }
 
         private object CanRenameBed(BasePlayer player, SleepingBag bag, string bedName)
@@ -812,9 +796,7 @@ namespace Oxide.Plugins
             if (player == null || bag == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} renaming SleepingBag {bag.name}:{bag.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(bag.ShortPrefabName, player.userID, bag.OwnerID)) return null;
-
-            return true;
+            return CanAccess(bag?.ShortPrefabName, player.userID, bag.OwnerID) ? null : (object)true;
         }
 
         private object CanAssignBed(BasePlayer player, SleepingBag bag, ulong targetPlayerId)
@@ -822,9 +804,7 @@ namespace Oxide.Plugins
             if (player == null || bag == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} assigning SleepingBag {bag.name}:{bag.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(bag.ShortPrefabName, player.userID, bag.OwnerID)) return null;
-
-            return true;
+            return CanAccess(bag?.ShortPrefabName, player.userID, bag.OwnerID) ? null : (object)true;
         }
 
         private object CanSetBedPublic(BasePlayer player, SleepingBag bag)
@@ -832,9 +812,7 @@ namespace Oxide.Plugins
             if (player == null || bag == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} setting SleepingBag {bag.name}:{bag.OwnerID} public");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(bag.ShortPrefabName, player.userID, bag.OwnerID)) return null;
-
-            return true;
+            return CanAccess(bag?.ShortPrefabName, player.userID, bag.OwnerID) ? null : (object)true;
         }
 
         private object CanLootPlayer(BasePlayer target, BasePlayer player)
@@ -843,10 +821,8 @@ namespace Oxide.Plugins
             if (player.userID == target.userID) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting Player {target.displayName}:{target.UserIDString}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(target.ShortPrefabName, player.userID, target.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(target)) return null;
-
-            return false;
+            if (CanAccess(target?.ShortPrefabName, player.userID, target.userID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(target) ? null : (object)false;
         }
 
         private object OnOvenToggle(BaseOven oven, BasePlayer player)
@@ -857,9 +833,7 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if (CheckCupboardAccess(oven, player)) return null;
             if (CanAccess(oven?.ShortPrefabName, player.userID, oven.OwnerID)) return null;
-            if (CheckShare(oven, player.userID)) return null;
-
-            return true;
+            return CheckShare(oven, player.userID) ? null : (object)true;
         }
 
         private object OnButtonPress(PressButton button, BasePlayer player)
@@ -869,9 +843,7 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
             if (!button.OwnerID.IsSteamId()) return null;
-            if (CanAccess(button.ShortPrefabName, player.userID, button.OwnerID)) return null;
-
-            return true;
+            return CanAccess(button?.ShortPrefabName, player.userID, button.OwnerID) ? null : (object)true;
         }
 
         private object CanLock(BasePlayer player, BaseLock baseLock)
@@ -881,9 +853,7 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
             if (!baseLock.OwnerID.IsSteamId()) return null;
-            if (CanAccess(baseLock.ShortPrefabName, player.userID, baseLock.OwnerID)) return null;
-
-            return true;
+            return CanAccess(baseLock?.ShortPrefabName, player.userID, baseLock.OwnerID) ? null : (object)true;
         }
 
         private object CanChangeCode(BasePlayer player, CodeLock codeLock, string newCode, bool isGuestCode)
@@ -893,9 +863,7 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
             if (!codeLock.OwnerID.IsSteamId()) return null;
-            if (CanAccess(codeLock.ShortPrefabName, player.userID, codeLock.OwnerID)) return null;
-
-            return true;
+            return CanAccess(codeLock?.ShortPrefabName, player.userID, codeLock.OwnerID) ? null : (object)true;
         }
 
         private object OnSwitchToggle(IOEntity entity, BasePlayer player)
@@ -905,9 +873,7 @@ namespace Oxide.Plugins
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
 
             if (!entity.OwnerID.IsSteamId()) return null;
-            if (CanAccess(entity.ShortPrefabName, player.userID, entity.OwnerID)) return null;
-
-            return true;
+            return CanAccess(entity?.ShortPrefabName, player.userID, entity.OwnerID) ? null : (object)true;
         }
 
         private object CanTakeCutting(BasePlayer player, GrowableEntity plant)
@@ -915,10 +881,8 @@ namespace Oxide.Plugins
             if (player == null || plant == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting plant cutting {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(plant.ShortPrefabName, player.userID, plant.OwnerID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(plant)) return null;
-
-            return true;
+            if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
 
         private object OnRemoveDying(GrowableEntity plant, BasePlayer player)
@@ -926,10 +890,8 @@ namespace Oxide.Plugins
             if (player == null || plant == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting dying plant {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(plant.ShortPrefabName, player.userID, plant.OwnerID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(plant)) return null;
-
-            return true;
+            if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
 
         private object OnGrowableGather(GrowableEntity plant, BasePlayer player)
@@ -937,10 +899,8 @@ namespace Oxide.Plugins
             if (player == null || plant == null) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting plant {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(plant.ShortPrefabName, player.userID, plant.OwnerID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(plant)) return null;
-
-            return true;
+            if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
 
         private object OnCupboardAuthorize(BuildingPrivlidge privilege, BasePlayer player)
@@ -949,11 +909,9 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} attempting to authenticate to a TC.");
             if (configData.Options.OverrideTC) return null;
             if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
-            if (CanAccess(privilege.ShortPrefabName, player.userID, privilege.OwnerID)) return null;
+            if (CanAccess(privilege?.ShortPrefabName, player.userID, privilege.OwnerID)) return null;
             if (CheckShare(privilege, player.userID)) return null;
-            if (configData.Options.useNextGenPVE && CanLootPVP(privilege)) return null;
-
-            return true;
+            return configData.Options.useNextGenPVE && CanLootPVP(privilege) ? null : (object)true;
         }
         #endregion hooks
 
@@ -1001,7 +959,7 @@ namespace Oxide.Plugins
                 SaveConfig(configData);
                 return true;
             }
-            return false;
+            return true;
         }
 
         // From PlayerDatabase
@@ -1039,6 +997,7 @@ namespace Oxide.Plugins
 
         private bool CheckShare(BaseEntity target, ulong userid)
         {
+            if (target == null) return false;
             if (sharing.ContainsKey(target.OwnerID.ToString()))
             {
                 DoLog($"Found entry for {target.OwnerID}");
@@ -1063,6 +1022,7 @@ namespace Oxide.Plugins
         private bool CanAccess(string prefab, ulong source, ulong target)
         {
             if (!enabled) return true;
+            if (prefab.Length == 0) return true;
             bool inzone = false;
 
             object externalCheck = Interface.CallHook("OnLootProtectionCanAccess", new object[] { prefab, source, target });
@@ -1340,21 +1300,17 @@ namespace Oxide.Plugins
         private string[] GetPlayerZones(BasePlayer player)
         {
             if (player == null) return null;
-            if (ZoneManager && configData.Options.useZoneManager)
-            {
-                return (string[])ZoneManager?.Call("GetPlayerZoneIDs", new object[] { player });
-            }
-            return null;
+            return ZoneManager && configData.Options.useZoneManager
+                ? (string[])ZoneManager?.Call("GetPlayerZoneIDs", new object[] { player })
+                : null;
         }
 
         private string[] GetEntityZones(BaseEntity entity)
         {
             if (entity == null) return null;
-            if (ZoneManager && configData.Options.useZoneManager && entity.IsValid())
-            {
-                return (string[])ZoneManager?.Call("GetEntityZoneIDs", new object[] { entity });
-            }
-            return null;
+            return ZoneManager && configData.Options.useZoneManager && entity.IsValid()
+                ? (string[])ZoneManager?.Call("GetEntityZoneIDs", new object[] { entity })
+                : null;
         }
 
         private void DoLog(string message, int indent = 0)
