@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.37")]
+    [Info("Loot Protection", "RFC1920", "1.0.38")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -689,6 +689,7 @@ namespace Oxide.Plugins
             if (player.userID.IsSteamId() != true) return null;
             DoLog($"Player {player.displayName} picking up {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
@@ -701,6 +702,7 @@ namespace Oxide.Plugins
             if (player.userID.IsSteamId() != true) return null;
             DoLog($"Player {player.displayName} picking up {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             return CheckShare(ent, player.userID) ? null : (object)true;
@@ -713,6 +715,7 @@ namespace Oxide.Plugins
             BaseEntity ent = sign.GetComponentInParent<BaseEntity>();
             DoLog($"Player {player.displayName} painting PhotoFrame {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
@@ -726,6 +729,7 @@ namespace Oxide.Plugins
             BaseEntity ent = sign.GetComponentInParent<BaseEntity>();
             DoLog($"Player {player.displayName} painting SIGN {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
@@ -758,7 +762,6 @@ namespace Oxide.Plugins
             BaseEntity ent = container?.GetComponentInParent<BaseEntity>();
             if (ent == null) return null;
             DoLog($"Player {player.displayName} looting StorageContainer {ent.ShortPrefabName} owned by {ent.OwnerID}");
-            //if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass)
             {
                 DoLog("Admin Bypass");
@@ -899,6 +902,7 @@ namespace Oxide.Plugins
             if (player.userID.IsSteamId() != true) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting plant cutting {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
             return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
@@ -909,6 +913,7 @@ namespace Oxide.Plugins
             if (player.userID.IsSteamId() != true) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting dying plant {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
             return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
@@ -919,6 +924,7 @@ namespace Oxide.Plugins
             if (player.userID.IsSteamId() != true) return null;
             DoLog($"Player {player.displayName}:{player.UserIDString} looting plant {plant.ShortPrefabName}:{plant.OwnerID}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
             return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
@@ -930,6 +936,7 @@ namespace Oxide.Plugins
             DoLog($"Player {player.displayName} attempting to authenticate to a TC.");
             if (configData.Options.OverrideTC) return null;
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+
             if (CanAccess(privilege?.ShortPrefabName, player.userID, privilege.OwnerID)) return null;
             if (CheckShare(privilege, player.userID)) return null;
             return configData.Options.useNextGenPVE && CanLootPVP(privilege) ? null : (object)true;
@@ -1094,7 +1101,6 @@ namespace Oxide.Plugins
 
             if (configData.Options.useZoneManager)
             {
-
                 if (configData.EnabledZones.Length == 0 && configData.DisabledZones.Length == 0)
                 {
                     DoLog("Admin set useZoneManager but didn't list any zones...");
@@ -1199,7 +1205,7 @@ namespace Oxide.Plugins
         {
             foreach (BasePlayer activePlayer in BasePlayer.activePlayerList)
             {
-                if (activePlayer.userID.Equals(userid))
+                if (activePlayer.userID == userid)
                 {
                     return activePlayer;
                 }
@@ -1208,7 +1214,7 @@ namespace Oxide.Plugins
             {
                 foreach (BasePlayer sleepingPlayer in BasePlayer.sleepingPlayerList)
                 {
-                    if (sleepingPlayer.userID.Equals(userid))
+                    if (sleepingPlayer.userID == userid)
                     {
                         return sleepingPlayer;
                     }
