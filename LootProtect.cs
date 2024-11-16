@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.38")]
+    [Info("Loot Protection", "RFC1920", "1.0.39")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -484,7 +484,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private void ShareBuilding(Vector3 position, ulong owner, float range=0)
+        private void ShareBuilding(Vector3 position, ulong owner, float range = 0)
         {
             if (range == 0) range = configData.Options.BuildingShareRange;
             if (!sharing.ContainsKey(owner.ToString()))
@@ -1050,7 +1050,7 @@ namespace Oxide.Plugins
         private bool CanAccess(string prefab, ulong source, ulong target)
         {
             if (!enabled) return true;
-            if (prefab.Length == 0) return true;
+            if (string.IsNullOrEmpty(prefab)) return true;
             bool inzone = false;
 
             object externalCheck = Interface.CallHook("OnLootProtectionCanAccess", new object[] { prefab, source, target });
@@ -1201,7 +1201,7 @@ namespace Oxide.Plugins
             return result;
         }
 
-        private BasePlayer FindPlayerByID(ulong userid, bool includeSleepers=true)
+        private BasePlayer FindPlayerByID(ulong userid, bool includeSleepers = true)
         {
             foreach (BasePlayer activePlayer in BasePlayer.activePlayerList)
             {
