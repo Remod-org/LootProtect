@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.39")]
+    [Info("Loot Protection", "RFC1920", "1.0.40")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -1409,6 +1409,9 @@ namespace Oxide.Plugins
                 configData.Options.useNextGenPVE = false;
                 configData.Options.allowLootingInPVPAreas = false;
             }
+            configData.EnabledZones ??= new string[0];
+            configData.DisabledZones ??= new string[0];
+
             configData.Version = Version;
             SaveConfig(configData);
         }
