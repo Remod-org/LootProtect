@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.40")]
+    [Info("Loot Protection", "RFC1920", "1.0.41")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -947,7 +947,7 @@ namespace Oxide.Plugins
         // Accept external zone config from DynamicPVP
         private bool AddOrUpdateMapping(string key, string rulesetname)
         {
-            if (configData.DisabledZones == null || configData.DisabledZones.Length == 0)
+            if (configData.DisabledZones == null || configData.DisabledZones?.Length == 0)
             {
                 List<string> newzones = new List<string> { key };
                 configData.DisabledZones = newzones.ToArray();
@@ -971,11 +971,11 @@ namespace Oxide.Plugins
         // Accept external zone config from DynamicPVP
         private bool RemoveMapping(string key)
         {
-            if (configData.DisabledZones == null || configData.DisabledZones.Length == 0)
+            if (configData.DisabledZones == null || configData.DisabledZones?.Length == 0)
             {
                 return true;
             }
-            if (configData.DisabledZones.Length > 0 && configData.DisabledZones.Contains(key))
+            if (configData.DisabledZones?.Length > 0 && configData.DisabledZones.Contains(key))
             {
                 List<string> newzones = new List<string>();
                 foreach (string zone in configData.DisabledZones)
@@ -1101,7 +1101,7 @@ namespace Oxide.Plugins
 
             if (configData.Options.useZoneManager)
             {
-                if (configData.EnabledZones.Length == 0 && configData.DisabledZones.Length == 0)
+                if (configData.EnabledZones?.Length == 0 && configData.DisabledZones?.Length == 0)
                 {
                     DoLog("Admin set useZoneManager but didn't list any zones...");
                     inzone = true;
@@ -1112,7 +1112,7 @@ namespace Oxide.Plugins
                     // If no zones are set, this will be skipped altogether.
                     string[] pzones = GetPlayerZones(player);
 
-                    if (configData.EnabledZones.Length > 0 && pzones?.Length > 0)
+                    if (configData.EnabledZones?.Length > 0 && pzones?.Length > 0)
                     {
                         // Compare player's zones to our zone list
                         foreach (string z in pzones)
@@ -1125,7 +1125,7 @@ namespace Oxide.Plugins
                             }
                         }
                     }
-                    if (configData.DisabledZones.Length > 0 && pzones?.Length > 0)
+                    if (configData.DisabledZones?.Length > 0 && pzones?.Length > 0)
                     {
                         inzone = true;
                         // Compare player's zones to our disabled zone list
