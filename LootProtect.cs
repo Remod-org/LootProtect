@@ -1148,7 +1148,6 @@ namespace Oxide.Plugins
             }
 
             DoLog($"Checking access to {prefab}");
-            //if (target == 0)
             if (!target.IsSteamId())
             {
                 DoLog("Not owned by a real player.  Access allowed.");
