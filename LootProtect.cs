@@ -31,7 +31,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.41")]
+    [Info("Loot Protection", "RFC1920", "1.0.42")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
@@ -749,6 +749,24 @@ namespace Oxide.Plugins
 
             DoLog($"Player {player.displayName} looting VM {ent?.ShortPrefabName}");
             if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+            if (CheckCupboardAccess(ent, player)) return null;
+            if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
+            if (CheckShare(ent, player.userID)) return null;
+            return configData.Options.useNextGenPVE && CanLootPVP(ent as BaseCombatEntity) ? null : (object)true;
+        }
+
+        private object CanLootEntity(BasePlayer player, ContainerIOEntity container)
+        {
+            if (player == null || container == null) return null;
+            if (player.userID.IsSteamId() != true) return null;
+            BaseEntity ent = container?.GetComponentInParent<BaseEntity>();
+            if (ent == null) return null;
+            DoLog($"Player {player.displayName} looting ContainerIOEntity {ent.ShortPrefabName} owned by {ent.OwnerID}");
+            if ((player.IsAdmin || permission.UserHasPermission(player?.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass)
+            {
+                DoLog("Admin Bypass");
+                return null;
+            }
             if (CheckCupboardAccess(ent, player)) return null;
             if (CanAccess(ent?.ShortPrefabName, player.userID, ent.OwnerID)) return null;
             if (CheckShare(ent, player.userID)) return null;
