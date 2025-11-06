@@ -31,14 +31,14 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Loot Protection", "RFC1920", "1.0.42")]
+    [Info("Loot Protection", "RFC1920", "1.0.43")]
     [Description("Prevent access to player containers, locks, etc.")]
     internal class LootProtect : RustPlugin
     {
         #region vars
-        private Dictionary<string, List<Share>> sharing = new Dictionary<string, List<Share>>();
-        private Dictionary<string, long> lastConnected = new Dictionary<string, long>();
-        private Dictionary<ulong, ulong> lootingBackpack = new Dictionary<ulong, ulong>();
+        private Dictionary<string, List<Share>> sharing = new();
+        private Dictionary<string, long> lastConnected = new();
+        private Dictionary<ulong, ulong> lootingBackpack = new();
         private const string permLootProtAdmin = "lootprotect.admin";
         private const string permLootProtAll = "lootprotect.all";
         private const string permLootProtShare = "lootprotect.share";
@@ -199,7 +199,7 @@ namespace Oxide.Plugins
 
         private void RunSchedule(bool refresh = false)
         {
-            TimeSpan ts = new TimeSpan();
+            TimeSpan ts = new();
 
             if (configData.Options.useRealTime)
             {
@@ -290,7 +290,7 @@ namespace Oxide.Plugins
                     if (ent != null)
                     {
                         if (ent.OwnerID != player.userID && !IsFriend(player.userID, ent.OwnerID)) return;
-                        List<Share> repl = new List<Share>();
+                        List<Share> repl = new();
                         foreach (Share x in sharing[iplayer.Id])
                         {
                             if (x.netid != (uint)ent.net.ID.Value)
@@ -446,7 +446,7 @@ namespace Oxide.Plugins
             int found = 0;
 
             Collider[] hits = Physics.OverlapSphere(player.transform.position, configData.Options.BuildingShareRange, LayerMask.GetMask("Default", "Deployed"));
-            List<Share> repl = new List<Share>(sharing[iplayer.Id]);
+            List<Share> repl = new(sharing[iplayer.Id]);
 
             DoLog($"Checking {hits.Length} local entities");
             Message(iplayer, "checkinglocal", hits.Length.ToString());
@@ -494,12 +494,12 @@ namespace Oxide.Plugins
             }
 
             Collider[] hits = Physics.OverlapSphere(position, range, LayerMask.GetMask("Default", "Deployed"));
-            List<string> excludestd = new List<string>() { "cupboard.tool.deployed", "doorcloser", "rug.deployed", "shelves", "table.deployed", "spinner.wheel.deployed", "metal-ore", "sulfur-ore", "stone-ore", "loot_barrel_2", "loot-barrel-1", "trash-pile-1" };
-            List<string> excludelights = new List<string>() { "ceilinglight.deployed", "tunalight.deployed", "lantern.deployed" };
+            List<string> excludestd = new() { "cupboard.tool.deployed", "doorcloser", "rug.deployed", "shelves", "table.deployed", "spinner.wheel.deployed", "metal-ore", "sulfur-ore", "stone-ore", "loot_barrel_2", "loot-barrel-1", "trash-pile-1" };
+            List<string> excludelights = new() { "ceilinglight.deployed", "tunalight.deployed", "lantern.deployed" };
 
             DoLog($"Checking {hits.Length} local entities");
             int count = 0;
-            List<ulong> populated = new List<ulong>();
+            List<ulong> populated = new();
             for (int i = 0; i < hits.Length; i++)
             {
                 BaseEntity ent = hits[i].GetComponentInParent<BaseEntity>();
@@ -562,13 +562,13 @@ namespace Oxide.Plugins
 
             string message = "";
             Collider[] hits = Physics.OverlapSphere(player.transform.position, configData.Options.BuildingShareRange, LayerMask.GetMask("Default", "Deployed"));
-            List<string> excludestd = new List<string>() { "cupboard.tool.deployed", "doorcloser", "rug.deployed", "shelves", "table.deployed", "spinner.wheel.deployed", "metal-ore", "sulfur-ore", "stone-ore", "loot_barrel_2", "loot-barrel-1", "trash-pile-1" };
-            List<string> excludelights = new List<string>() { "ceilinglight.deployed", "tunalight.deployed", "lantern.deployed" };
+            List<string> excludestd = new() { "cupboard.tool.deployed", "doorcloser", "rug.deployed", "shelves", "table.deployed", "spinner.wheel.deployed", "metal-ore", "sulfur-ore", "stone-ore", "loot_barrel_2", "loot-barrel-1", "trash-pile-1" };
+            List<string> excludelights = new() { "ceilinglight.deployed", "tunalight.deployed", "lantern.deployed" };
 
             DoLog($"Checking {hits.Length} local entities");
             Message(iplayer, "checkinglocal", hits.Length.ToString());
             int count = 0;
-            List<ulong> populated = new List<ulong>();
+            List<ulong> populated = new();
             for (int i = 0; i < hits.Length; i++)
             {
                 BaseEntity ent = hits[i].GetComponentInParent<BaseEntity>();
@@ -967,14 +967,14 @@ namespace Oxide.Plugins
         {
             if (configData.DisabledZones == null || configData.DisabledZones?.Length == 0)
             {
-                List<string> newzones = new List<string> { key };
+                List<string> newzones = new() { key };
                 configData.DisabledZones = newzones.ToArray();
                 SaveConfig(configData);
                 return true;
             }
             if (!configData.DisabledZones.Contains(key))
             {
-                List<string> newzones = new List<string>
+                List<string> newzones = new()
                 {
                     configData.DisabledZones.ToArray()[0],
                     key
@@ -995,7 +995,7 @@ namespace Oxide.Plugins
             }
             if (configData.DisabledZones?.Length > 0 && configData.DisabledZones.Contains(key))
             {
-                List<string> newzones = new List<string>();
+                List<string> newzones = new();
                 foreach (string zone in configData.DisabledZones)
                 {
                     if (zone == key) continue;
@@ -1027,10 +1027,10 @@ namespace Oxide.Plugins
                 return false; // NO TC to check...
             }
 
-            foreach (ProtoBuf.PlayerNameID p in tc.authorizedPlayers.ToArray())
+            foreach (ulong p in tc.authorizedPlayers)
             {
                 float distance = (float)Math.Round(Vector3.Distance(tc.transform.position, entity.transform.position), 2);
-                if (p.userid == player.userID)
+                if (p == player.userID)
                 {
                     DoLog($"CheckCupboardAccess:     Found authorized cupboard {distance}m from {entity.ShortPrefabName}!");
                     return true;
@@ -1436,7 +1436,7 @@ namespace Oxide.Plugins
         protected override void LoadDefaultConfig()
         {
             Puts("Creating new config file.");
-            ConfigData config = new ConfigData
+            ConfigData config = new()
             {
                 Options = new Options()
                 {
@@ -1523,7 +1523,7 @@ namespace Oxide.Plugins
         public class ConfigData
         {
             public Options Options;
-            public Dictionary<string, bool> Rules = new Dictionary<string, bool>();
+            public Dictionary<string, bool> Rules = new();
             public string[] Zones;
             public string[] EnabledZones;
             public string[] DisabledZones;
