@@ -946,6 +946,16 @@ namespace Oxide.Plugins
             if (CanAccess(plant?.ShortPrefabName, player.userID, plant.OwnerID)) return null;
             return configData.Options.useNextGenPVE && CanLootPVP(plant) ? null : (object)true;
         }
+		
+		private object CanTakeCutting(BasePlayer player, GrowableEntity entity)
+		{
+			if (player == null || entity == null) return null;
+			DoLog($"Player {player.displayName}:{player.UserIDString} taking a clone of {entity.ShortPrefabName}:{entity.OwnerID}");
+			if ((player.IsAdmin || permission.UserHasPermission(player.UserIDString, permLootProtAdmin)) && configData.Options.AdminBypass) return null;
+			if (CanAccess(entity.ShortPrefabName, player.userID, entity.OwnerID)) return null;
+
+			return true;
+		}
 
         private object OnCupboardAuthorize(BuildingPrivlidge privilege, BasePlayer player)
         {
